@@ -9,4 +9,5 @@ mime_guess = "2.0.5"
 rust-embed = { version = "8.11.0", features = ["axum"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread", "signal"] }
+tokio = { version = "1.52.3", features = ["full"] }
+tower-http = { version = "0.6.11", features = ["timeout"] }
