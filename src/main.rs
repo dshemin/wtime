@@ -1,3 +1,4 @@
+mod config;
 mod handler;
 
 use std::time::Duration;
@@ -5,13 +6,13 @@ use std::time::Duration;
 use axum::{Router, http::StatusCode, routing::get};
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 use tracing::info;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{filter::LevelFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> Result<(), impl std::error::Error> {
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    let cfg = config::load();
+
+    setup_logger(cfg.log_level);
 
     let app = Router::new()
         .route("/", get(handler::index_handler))
@@ -22,11 +23,22 @@ async fn main() -> Result<(), impl std::error::Error> {
         ))
         .layer(TraceLayer::new_for_http());
 
-    info!("wtimer started");
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    info!(config = ?cfg, "wtimer started");
+    let listener = tokio::net::TcpListener::bind((cfg.address, cfg.port)).await?;
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown())
         .await
+}
+
+fn setup_logger(log_level: tracing::Level) {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_file(true)
+                .with_line_number(true),
+        )
+        .with(LevelFilter::from_level(log_level))
+        .init();
 }
 
 async fn shutdown() {
