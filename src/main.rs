@@ -1,22 +1,35 @@
 mod config;
 mod handler;
+mod storage;
 
 use std::time::Duration;
 
-use axum::{Router, http::StatusCode, routing::get};
+use axum::{
+    Router,
+    http::StatusCode,
+    routing::{get, post},
+};
 use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
 use tracing::info;
 use tracing_subscriber::{filter::LevelFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
-async fn main() -> Result<(), impl std::error::Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = config::load();
 
     setup_logger(cfg.log_level);
 
+    let storage = storage::TimeRangeStorage::new(&cfg.db)?;
+
+    let api = Router::new()
+        .route("/time-ranges/{date}", get(handler::time_ranges::list))
+        .route("/time-ranges/{date}", post(handler::time_ranges::create))
+        .with_state(storage);
+
     let app = Router::new()
         .route("/", get(handler::index_handler))
         .route("/{*file}", get(handler::static_handler))
+        .nest("/api/v1", api)
         .layer(TimeoutLayer::with_status_code(
             StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(10),
@@ -27,7 +40,9 @@ async fn main() -> Result<(), impl std::error::Error> {
     let listener = tokio::net::TcpListener::bind((cfg.address, cfg.port)).await?;
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown())
-        .await
+        .await?;
+
+    Ok(())
 }
 
 fn setup_logger(log_level: tracing::Level) {
