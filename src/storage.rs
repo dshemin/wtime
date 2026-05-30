@@ -86,7 +86,7 @@ impl Value for TimeRange {
     where
         Self: 'a,
     {
-        if data.len() == 0 {
+        if data.is_empty() {
             return TimeRange {
                 start: Time::from_bytes(0, 0),
                 end: None,

@@ -9,3 +9,12 @@ build/frontend:
 build/api:
 	cargo build
 
+.PHONY: lint
+lint:
+	cargo fmt --check
+	cargo clippy
+	cargo machete
+
+.PHONY: test
+test:
+	cargo test

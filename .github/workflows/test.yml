@@ -1,0 +1,36 @@
+name: Test
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo Registry
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Cargo commands
+        run: cargo install cargo-machete
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
+          cache-dependency-path: ./frontend/yarn.lock
+
+      - name: Build frontend
+        run: |
+          yarn install
+          yarn build
+        working-directory: ./frontend
+
+      - name: Lint
+        run: make lint
+
+      - name: Test
+        run: make test
+
