@@ -17,4 +17,5 @@ lint:
 
 .PHONY: test
 test:
-	cargo test
+	cargo llvm-cov --no-fail-fast
+
