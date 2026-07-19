@@ -21,5 +21,5 @@ test:
 
 .PHONY: test-ci
 test-ci:
-	cargo llvm-cov --no-fail-fast
+	cargo llvm-cov --no-fail-fast --lcov --output-path lcov.info
 
