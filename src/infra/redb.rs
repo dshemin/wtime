@@ -1,5 +1,7 @@
 pub mod range;
 
+use std::path::Path;
+
 pub fn connect<T: AsRef<Path>>(path: T) -> Result<redb::Database, redb::DatabaseError> {
     redb::Database::create(path)
 }
@@ -45,7 +47,5 @@ macro_rules! impl_from_err {
     };
 }
 
-use std::path::Path;
-
-pub(self) use impl_from_err;
-pub(self) use impl_value;
+use impl_from_err;
+use impl_value;

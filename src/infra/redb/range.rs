@@ -22,7 +22,7 @@ impl Repository {
         txn.open_table(RANGES_BY_ID)?;
         txn.open_table(RANGES_BY_DAY)?;
         txn.commit()?;
-        let repo = Self { db: db };
+        let repo = Self { db };
         Ok(repo)
     }
 }
@@ -42,7 +42,7 @@ impl RepositoryTrait for Repository {
 
     async fn get_by_id(&self, id: &uuid::Uuid) -> GetResult {
         let db = self.db.clone();
-        let id = id.clone();
+        let id = *id;
         tokio::task::spawn_blocking(move || {
             let txn = db.begin_read()?;
             let table = txn.open_table(RANGES_BY_ID)?;
@@ -54,7 +54,7 @@ impl RepositoryTrait for Repository {
 
     async fn insert(&self, range: &Range) -> InsertResult {
         let db = self.db.clone();
-        let range = range.clone();
+        let range = *range;
         tokio::task::spawn_blocking(move || {
             let txn = db.begin_write()?;
             {

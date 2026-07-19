@@ -18,7 +18,7 @@ pub fn setup<T: Repository + 'static>(range_repo: T) -> Router {
         .route("/ranges", post(handler::ranges::create))
         .with_state(range_repo);
 
-    let app = Router::new()
+    Router::new()
         .route("/", get(handler::index_handler))
         .route("/{*file}", get(handler::static_handler))
         .nest("/api/v1", api)
@@ -26,7 +26,5 @@ pub fn setup<T: Repository + 'static>(range_repo: T) -> Router {
             StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(10),
         ))
-        .layer(TraceLayer::new_for_http());
-
-    app
+        .layer(TraceLayer::new_for_http())
 }

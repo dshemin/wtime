@@ -4,4 +4,3 @@ pub mod errors;
 pub mod handler;
 pub mod infra;
 pub mod server;
-pub mod storage;

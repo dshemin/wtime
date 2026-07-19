@@ -56,10 +56,11 @@ fn db_path_parser(s: &str) -> Result<PathBuf, String> {
     let path =
         absolute(path).map_err(|err| format!("failed to make path `{s}` absolute: `{err}`"))?;
 
-    if let Some(dir) = path.parent() {
-        if dir.exists() && !dir.is_dir() {
-            return Err(format!("`{s}` base directory is not a directory"));
-        }
+    if let Some(dir) = path.parent()
+        && dir.exists()
+        && !dir.is_dir()
+    {
+        return Err(format!("`{s}` base directory is not a directory"));
     }
 
     if path.exists() && path.is_dir() {

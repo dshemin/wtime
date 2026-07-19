@@ -62,7 +62,7 @@ impl Time {
     pub const MAX: Time = Time(SECONDS_PER_DAY);
 
     pub fn seconds(&self) -> u32 {
-        return self.0;
+        self.0
     }
 
     #[inline]
