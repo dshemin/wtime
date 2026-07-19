@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/dshemin/wtime/badge.svg?branch=master)](https://coveralls.io/github/dshemin/wtime?branch=master)
+
 # WTime
 
 A work-time tracking application designed to share status updates with employers
