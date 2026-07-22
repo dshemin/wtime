@@ -12,7 +12,8 @@ pub struct ErrorResponse {
     code: StatusCode,
 }
 
-pub type Result<T> = std::result::Result<Json<T>, ErrorResponse>;
+pub type Result<T> = std::result::Result<T, ErrorResponse>;
+pub type JsonResult<T> = Result<Json<T>>;
 
 macro_rules! err_resp_new {
     ($name:ident, $code:expr) => {

@@ -103,11 +103,13 @@ pub trait Repository: Send + Sync {
     async fn list_for_day(&self, day: NaiveDate) -> ListResult;
     async fn get_by_id(&self, id: &uuid::Uuid) -> GetResult;
     async fn insert(&self, range: &Range) -> InsertResult;
+    async fn delete(&self, id: &uuid::Uuid) -> DeleteResult;
 }
 
 pub type ListResult = Result<Vec<Range>, RepositoryError>;
 pub type GetResult = Result<Option<Range>, RepositoryError>;
 pub type InsertResult = Result<(), RepositoryError>;
+pub type DeleteResult = Result<(), RepositoryError>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum RepositoryError {

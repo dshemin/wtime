@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use crate::domain::range::{
-    GetResult, InsertResult, ListResult, Range, Repository as RepositoryTrait, RepositoryError,
+    DeleteResult, GetResult, InsertResult, ListResult, Range, Repository as RepositoryTrait,
+    RepositoryError,
 };
 use crate::infra::redb::{impl_from_err, impl_value};
 
@@ -74,6 +75,33 @@ impl RepositoryTrait for Repository {
             {
                 let mut table = txn.open_table(RANGES_BY_ID)?;
                 table.insert(range.id().as_bytes(), range)?;
+            }
+            txn.commit()?;
+            Ok(())
+        })
+        .await?
+    }
+
+    async fn delete(&self, id: &uuid::Uuid) -> DeleteResult {
+        let db = self.db.clone();
+        let id = *id;
+        tokio::task::spawn_blocking(move || {
+            let txn = db.begin_write()?;
+            let day = {
+                let mut table = txn.open_table(RANGES_BY_ID)?;
+                table.remove(id.as_bytes())?.map(|x| x.value().day())
+            };
+
+            if let Some(day) = day {
+                {
+                    let mut table = txn.open_table(RANGES_BY_DAY)?;
+                    let key = naivedate2u32(&day);
+                    let mut ranges = table.get(key)?.map(|v| v.value()).unwrap_or_default();
+
+                    ranges.retain(|x| x.id() != id);
+
+                    table.insert(&key, &ranges)?;
+                }
             }
             txn.commit()?;
             Ok(())

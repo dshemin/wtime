@@ -2,14 +2,14 @@ use std::sync::Arc;
 
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     domain::range::{Range, Repository, RepositoryError},
-    handler::Result,
+    handler::{JsonResult, Result},
 };
 use crate::{
     domain::time::{Time, TimeError},
@@ -18,16 +18,22 @@ use crate::{
 
 pub async fn list(
     State(repo): State<Arc<dyn Repository>>,
-    Path(date): Path<NaiveDate>,
-) -> Result<Vec<Range>> {
+    Query(params): Query<ListQuery>,
+) -> JsonResult<Vec<Range>> {
+    let date = params.date.unwrap_or(chrono::Local::now().date_naive());
     let res = repo.list_for_day(date).await?;
     Ok(Json(res))
+}
+
+#[derive(Deserialize)]
+pub struct ListQuery {
+    date: Option<NaiveDate>,
 }
 
 pub async fn create(
     State(repo): State<Arc<dyn Repository>>,
     Json(req): Json<CreateRangeRequest>,
-) -> Result<CreateRangeResponse> {
+) -> JsonResult<CreateRangeResponse> {
     let start = Time::from_hms(req.start.hour, req.start.minute, req.start.seconds)?;
     let end = req
         .end
@@ -57,6 +63,14 @@ pub struct CreateRangeTime {
 #[derive(Serialize)]
 pub struct CreateRangeResponse {
     id: uuid::Uuid,
+}
+
+pub async fn delete(
+    State(repo): State<Arc<dyn Repository>>,
+    Path(id): Path<uuid::Uuid>,
+) -> Result<()> {
+    repo.delete(&id).await?;
+    Ok(())
 }
 
 impl From<RepositoryError> for ErrorResponse {
