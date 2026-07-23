@@ -63,8 +63,7 @@ impl RepositoryTrait for Repository {
                 let key = naivedate2u32(&range.day());
                 let mut ranges = table.get(key)?.map(|v| v.value()).unwrap_or_default();
 
-                let intersects = ranges.iter().any(|x| range.intersects(x));
-                if intersects {
+                if range.intersects_iter(&ranges) {
                     return Err(RepositoryError::Intersects);
                 }
 
@@ -76,6 +75,42 @@ impl RepositoryTrait for Repository {
                 let mut table = txn.open_table(RANGES_BY_ID)?;
                 table.insert(range.id().as_bytes(), range)?;
             }
+            txn.commit()?;
+            Ok(())
+        })
+        .await?
+    }
+
+    async fn update(&self, range: &Range) -> InsertResult {
+        let db = self.db.clone();
+        let range = *range;
+        tokio::task::spawn_blocking(move || {
+            let txn = db.begin_write()?;
+            {
+                let mut table = txn.open_table(RANGES_BY_ID)?;
+                if table.get(range.id().as_bytes())?.is_none() {
+                    return Err(RepositoryError::NotExists);
+                }
+                table.insert(range.id().as_bytes(), range)?;
+            }
+
+            {
+                let mut table = txn.open_table(RANGES_BY_DAY)?;
+                let key = naivedate2u32(&range.day());
+                let mut ranges = table.get(key)?.map(|v| v.value()).unwrap_or_default();
+
+                if range.intersects_iter(&ranges) {
+                    return Err(RepositoryError::Intersects);
+                }
+
+                if let Some(existing) = ranges.iter_mut().find(|x| x.id() == range.id()) {
+                    *existing = range;
+                } else {
+                    ranges.push(range);
+                }
+                table.insert(&key, &ranges)?;
+            }
+
             txn.commit()?;
             Ok(())
         })

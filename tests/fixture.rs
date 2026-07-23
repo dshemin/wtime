@@ -1,14 +1,11 @@
 use std::sync::Arc;
 
-use axum::extract::Path;
 use axum_test::{TestRequest, TestServer};
-use redb::Database;
 use tempfile::tempdir;
 
 use wtimer_lib::*;
 
 pub struct Fixture {
-    db: Arc<Database>,
     srv: TestServer,
 }
 
@@ -29,9 +26,11 @@ impl Fixture {
         let app = server::setup(range_repo);
         let srv = TestServer::new(app);
 
-        Self { db, srv }
+        Self { srv }
     }
 
     from_test_server!(get);
     from_test_server!(post);
+    from_test_server!(put);
+    from_test_server!(delete);
 }

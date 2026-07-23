@@ -34,11 +34,8 @@ pub async fn create(
     State(repo): State<Arc<dyn Repository>>,
     Json(req): Json<CreateRangeRequest>,
 ) -> JsonResult<CreateRangeResponse> {
-    let start = Time::from_hms(req.start.hour, req.start.minute, req.start.seconds)?;
-    let end = req
-        .end
-        .map(|x| Time::from_hms(x.hour, x.minute, x.seconds))
-        .transpose()?;
+    let start = req.start.try_into()?;
+    let end = req.end.map(CreateRangeTime::try_into).transpose()?;
     let range = Range::new(req.date, start, end);
 
     repo.insert(&range).await?;
@@ -60,6 +57,14 @@ pub struct CreateRangeTime {
     seconds: u32,
 }
 
+impl TryInto<Time> for CreateRangeTime {
+    type Error = TimeError;
+
+    fn try_into(self) -> std::result::Result<Time, Self::Error> {
+        Time::from_hms(self.hour, self.minute, self.seconds)
+    }
+}
+
 #[derive(Serialize)]
 pub struct CreateRangeResponse {
     id: uuid::Uuid,
@@ -73,11 +78,32 @@ pub async fn delete(
     Ok(())
 }
 
+pub async fn update(
+    State(repo): State<Arc<dyn Repository>>,
+    Json(req): Json<UpdateRangeRequest>,
+) -> Result<()> {
+    let start = req.start.try_into()?;
+    let end = req.end.map(CreateRangeTime::try_into).transpose()?;
+
+    let range = Range::new_with_id(req.id, req.day, start, end);
+    repo.update(&range).await?;
+    Ok(())
+}
+
+#[derive(Deserialize)]
+pub struct UpdateRangeRequest {
+    id: uuid::Uuid,
+    day: NaiveDate,
+    start: CreateRangeTime,
+    end: Option<CreateRangeTime>,
+}
+
 impl From<RepositoryError> for ErrorResponse {
     fn from(value: RepositoryError) -> Self {
         match value {
             RepositoryError::Database(err) => ErrorResponse::internal(err.to_string()),
             RepositoryError::Serialization(err) => ErrorResponse::internal(err.to_string()),
+            RepositoryError::NotExists => ErrorResponse::not_found("range not exists"),
             RepositoryError::Intersects => {
                 ErrorResponse::bad_request("range intersects with exists")
             }

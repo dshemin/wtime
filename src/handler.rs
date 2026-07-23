@@ -28,6 +28,7 @@ macro_rules! err_resp_new {
 
 impl ErrorResponse {
     err_resp_new!(bad_request, StatusCode::BAD_REQUEST);
+    err_resp_new!(not_found, StatusCode::NOT_FOUND);
     err_resp_new!(internal, StatusCode::INTERNAL_SERVER_ERROR);
 }
 

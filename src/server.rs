@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use axum::Router;
 use axum::http::StatusCode;
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, post, put};
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 
@@ -16,6 +16,7 @@ pub fn setup<T: Repository + 'static>(range_repo: T) -> Router {
     let api = Router::new()
         .route("/ranges", get(handler::ranges::list))
         .route("/ranges", post(handler::ranges::create))
+        .route("/ranges", put(handler::ranges::update))
         .route("/ranges/{id}", delete(handler::ranges::delete))
         .with_state(range_repo);
 
@@ -38,7 +39,13 @@ pub fn setup<T: Repository + 'static>(range_repo: T) -> Router {
 
         let cors = CorsLayer::new()
             .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
-            .allow_methods([Method::GET, Method::POST, Method::HEAD, Method::DELETE])
+            .allow_methods([
+                Method::HEAD,
+                Method::GET,
+                Method::POST,
+                Method::PUT,
+                Method::DELETE,
+            ])
             .allow_origin(Any);
 
         app.layer(cors)
