@@ -1,5 +1,7 @@
 mod fixture;
 
+use std::fmt::format;
+
 use chrono::NaiveDate;
 use serde_json::json;
 use wtimer_lib::domain::range::Range;
@@ -54,7 +56,10 @@ async fn create_and_list_ranges() {
 
     let ranges = res.json::<Vec<Range>>();
     assert_eq!(ranges.len(), 1);
-    assert_eq!(ranges[0].day(), NaiveDate::from_ymd_opt(2026, 7, 15).unwrap());
+    assert_eq!(
+        ranges[0].day(),
+        NaiveDate::from_ymd_opt(2026, 7, 15).unwrap()
+    );
 }
 
 #[tokio::test]
@@ -133,10 +138,13 @@ async fn update_range() {
         }))
         .await;
     res.assert_status_ok();
-    let id = res.json::<serde_json::Value>()["id"].as_str().unwrap().to_string();
+    let id = res.json::<serde_json::Value>()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
 
     let res = fixture
-        .put("/api/v1/ranges")
+        .put(format!("/api/v1/ranges/{id}"))
         .json(&json!({
             "id": id,
             "day": "2026-07-15",
@@ -160,9 +168,8 @@ async fn update_nonexistent_range_fails() {
     let fixture = Fixture::new().await;
 
     let res = fixture
-        .put("/api/v1/ranges")
+        .put("/api/v1/ranges/00000000-0000-0000-0000-000000000000")
         .json(&json!({
-            "id": "00000000-0000-0000-0000-000000000000",
             "day": "2026-07-15",
             "start": { "hour": 9, "minute": 0, "seconds": 0 },
             "end": { "hour": 17, "minute": 0, "seconds": 0 },
@@ -194,12 +201,14 @@ async fn update_intersecting_range_fails() {
         }))
         .await;
     res.assert_status_ok();
-    let id = res.json::<serde_json::Value>()["id"].as_str().unwrap().to_string();
+    let id = res.json::<serde_json::Value>()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
 
     let res = fixture
-        .put("/api/v1/ranges")
+        .put(format!("/api/v1/ranges/{id}"))
         .json(&json!({
-            "id": id,
             "day": "2026-07-15",
             "start": { "hour": 10, "minute": 0, "seconds": 0 },
             "end": { "hour": 14, "minute": 0, "seconds": 0 },
@@ -221,12 +230,14 @@ async fn update_range_remove_end() {
         }))
         .await;
     res.assert_status_ok();
-    let id = res.json::<serde_json::Value>()["id"].as_str().unwrap().to_string();
+    let id = res.json::<serde_json::Value>()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
 
     let res = fixture
-        .put("/api/v1/ranges")
+        .put(format!("/api/v1/ranges/{id}"))
         .json(&json!({
-            "id": id,
             "day": "2026-07-15",
             "start": { "hour": 9, "minute": 0, "seconds": 0 },
         }))
@@ -254,12 +265,14 @@ async fn update_range_invalid_time_fails() {
         }))
         .await;
     res.assert_status_ok();
-    let id = res.json::<serde_json::Value>()["id"].as_str().unwrap().to_string();
+    let id = res.json::<serde_json::Value>()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
 
     let res = fixture
-        .put("/api/v1/ranges")
+        .put(format!("/api/v1/ranges/{id}"))
         .json(&json!({
-            "id": id,
             "day": "2026-07-15",
             "start": { "hour": 25, "minute": 0, "seconds": 0 },
         }))
@@ -280,7 +293,10 @@ async fn delete_range() {
         }))
         .await;
     res.assert_status_ok();
-    let id = res.json::<serde_json::Value>()["id"].as_str().unwrap().to_string();
+    let id = res.json::<serde_json::Value>()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
 
     let res = fixture.delete(&format!("/api/v1/ranges/{}", id)).await;
     res.assert_status_ok();
@@ -315,7 +331,10 @@ async fn delete_range_and_keep_others() {
         }))
         .await;
     res.assert_status_ok();
-    let id1 = res.json::<serde_json::Value>()["id"].as_str().unwrap().to_string();
+    let id1 = res.json::<serde_json::Value>()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
 
     let res = fixture
         .post("/api/v1/ranges")

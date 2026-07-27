@@ -70,32 +70,32 @@ pub struct CreateRangeResponse {
     id: uuid::Uuid,
 }
 
-pub async fn delete(
-    State(repo): State<Arc<dyn Repository>>,
-    Path(id): Path<uuid::Uuid>,
-) -> Result<()> {
-    repo.delete(&id).await?;
-    Ok(())
-}
-
 pub async fn update(
     State(repo): State<Arc<dyn Repository>>,
+    Path(id): Path<uuid::Uuid>,
     Json(req): Json<UpdateRangeRequest>,
 ) -> Result<()> {
     let start = req.start.try_into()?;
     let end = req.end.map(CreateRangeTime::try_into).transpose()?;
 
-    let range = Range::new_with_id(req.id, req.day, start, end);
+    let range = Range::new_with_id(id, req.day, start, end);
     repo.update(&range).await?;
     Ok(())
 }
 
 #[derive(Deserialize)]
 pub struct UpdateRangeRequest {
-    id: uuid::Uuid,
     day: NaiveDate,
     start: CreateRangeTime,
     end: Option<CreateRangeTime>,
+}
+
+pub async fn delete(
+    State(repo): State<Arc<dyn Repository>>,
+    Path(id): Path<uuid::Uuid>,
+) -> Result<()> {
+    repo.delete(&id).await?;
+    Ok(())
 }
 
 impl From<RepositoryError> for ErrorResponse {

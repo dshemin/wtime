@@ -11,8 +11,8 @@ pub struct Fixture {
 
 macro_rules! from_test_server {
     ($name:ident) => {
-        pub fn $name(&self, path: &str) -> TestRequest {
-            self.srv.$name(path)
+        pub fn $name(&self, path: impl AsRef<str>) -> TestRequest {
+            self.srv.$name(path.as_ref())
         }
     };
 }
